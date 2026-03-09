@@ -27,11 +27,11 @@ jobs:
       - name: Run digest
         run: python advisor_digest.py
         env:
-          GROQ_API_KEY:    ${{ secrets.GROQ_API_KEY }}
-          SERPER_API_KEY:  ${{ secrets.SERPER_API_KEY }}
-          EMAIL_FROM:      ${{ secrets.EMAIL_FROM }}
-          EMAIL_PASSWORD:  ${{ secrets.EMAIL_PASSWORD }}
-          EMAIL_TO:        ${{ secrets.EMAIL_TO }}
+          GROQ_API_KEY:      ${{ secrets.GROQ_API_KEY }}
+          APIFY_API_TOKEN:   ${{ secrets.APIFY_API_TOKEN }}
+          EMAIL_FROM:        ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD:    ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:          ${{ secrets.EMAIL_TO }}
           # Optional overrides (defaults are gmail):
-          # SMTP_HOST:     ${{ secrets.SMTP_HOST }}
-          # SMTP_PORT:     ${{ secrets.SMTP_PORT }}
+          # SMTP_HOST:       ${{ secrets.SMTP_HOST }}
+          # SMTP_PORT:       ${{ secrets.SMTP_PORT }}
