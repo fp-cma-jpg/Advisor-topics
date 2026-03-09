@@ -1,0 +1,37 @@
+name: Weekly CFP Advisor Digest
+
+on:
+  schedule:
+    - cron: '0 13 * * 1'   # Every Monday at 1pm UTC (9am ET / 8am CT)
+  workflow_dispatch:         # Also allows manual "Run workflow" from GitHub Actions UI
+
+jobs:
+  digest:
+    name: Collect, Summarize & Email
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run digest
+        run: python advisor_digest.py
+        env:
+          GROQ_API_KEY:    ${{ secrets.GROQ_API_KEY }}
+          SERPER_API_KEY:  ${{ secrets.SERPER_API_KEY }}
+          EMAIL_FROM:      ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD:  ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO:        ${{ secrets.EMAIL_TO }}
+          # Optional overrides (defaults are gmail):
+          # SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          # SMTP_PORT:     ${{ secrets.SMTP_PORT }}
