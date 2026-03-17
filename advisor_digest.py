@@ -189,10 +189,10 @@ Below are bullet-point summaries extracted from posts and discussions on Reddit 
 {content}
 ---
 
-Identify the TOP 10 most discussed or important topics. For each topic provide:
+Identify the TOP 10 most discussed or important topics. Format each topic EXACTLY like this — use a number, never a bullet:
 
-1. **[Category Tags] Topic Title**
-   - Summary: 2-3 sentences. You MUST preserve [n] citation numbers inline in square brackets where relevant, e.g. "Advisors are debating X [1][4]." Always use square brackets — never bare numbers alone.
+1. **[Category, Category] Topic Title**
+   - 2-3 sentence summary. You MUST preserve [n] citation numbers inline in square brackets where relevant, e.g. "Advisors are debating X [1][4]." Always use square brackets — never bare numbers alone.
 
 Valid category tags: {categories}
 Use one or more tags per topic, comma-separated inside the brackets.
@@ -289,7 +289,7 @@ def summarize_with_groq(posts: list[dict]) -> str:
         content=combined,
         categories=", ".join(CATEGORIES),
     )
-    text = _groq_complete(client, [{"role": "user", "content": final_prompt}], max_tokens=2048)
+    text = _groq_complete(client, [{"role": "user", "content": final_prompt}], max_tokens=4096)
     return _fix_bare_citations(text)
 
 
@@ -343,7 +343,7 @@ def _add_citations(text: str, posts: list[dict]) -> str:
 
 
 def build_html_email(summary: str, date_str: str, posts: list[dict]) -> str:
-    topic_re = re.compile(r'^(?:\d+\.\s*)?\*\*\[([^\]]+)\]\s*(.+?)\*\*\s*$')
+    topic_re = re.compile(r'^(?:\*\s+|\d+\.\s*)?\*\*\[([^\]]+)\]\s*(.+?)\*\*\s*$')
     lines = summary.split("\n")
     html_lines = []
 
