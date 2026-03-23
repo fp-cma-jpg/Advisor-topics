@@ -203,10 +203,13 @@ Below are bullet-point summaries extracted from posts and discussions on Reddit 
 
 Identify the TOP 10 most discussed or important topics. At least 2-3 of the 10 topics MUST come primarily from LinkedIn posts — do not let Reddit dominate just because it has more posts. Weight LinkedIn topics by importance, not volume.
 
-Format each topic EXACTLY like this — use a number, never a bullet:
+Format each topic EXACTLY like this — use a number, never a bullet. The square brackets around the category tags are REQUIRED — do not omit them:
 
 1. **[Category, Category] Topic Title**
    - 2-3 sentence summary. You MUST preserve [n] citation numbers inline in square brackets where relevant, e.g. "Advisors are debating X [1][4]." Always use square brackets — never bare numbers alone.
+
+The opening line must follow this pattern exactly: number, period, space, **, [categories], space, title, **
+Example: 1. **[Tax, Retirement] SECURE 2.0 RMD Age Change**
 
 Be specific in both the title and summary. If advisors are discussing a specific law, tax rule, software tool, custodian, regulation, or named product — use its exact name (e.g. "SECURE 2.0", "Orion", "RMD age 73", "Form ADV"). Do not summarize into vague generalities.
 
@@ -359,13 +362,16 @@ def _add_citations(text: str, posts: list[dict]) -> str:
 
 
 def build_html_email(summary: str, date_str: str, posts: list[dict]) -> str:
+    # Primary: 1. **[Category, Category] Title**
     topic_re = re.compile(r'^(?:\*\s+|\d+\.\s*)?\*\*\[([^\]]+)\]\s*(.+?)\*\*\s*$')
+    # Fallback: 1. **Category, Category** Title  (LLM sometimes omits square brackets)
+    topic_re_alt = re.compile(r'^(?:\*\s+|\d+\.\s*)?\*\*([A-Za-z ,]+)\*\*\s+(.+)$')
     lines = summary.split("\n")
     html_lines = []
 
     for line in lines:
         stripped = line.strip()
-        topic_match = topic_re.match(stripped)
+        topic_match = topic_re.match(stripped) or topic_re_alt.match(stripped)
 
         if topic_match:
             cats_raw, title = topic_match.group(1), topic_match.group(2)

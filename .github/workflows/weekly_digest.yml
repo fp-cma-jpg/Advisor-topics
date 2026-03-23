@@ -1,4 +1,4 @@
-name: Weekly CFP Advisor Digest
+name: Weekly Advisor Digest
 
 on:
   schedule:
@@ -9,6 +9,8 @@ jobs:
   digest:
     name: Collect, Summarize & Email
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     timeout-minutes: 10
 
     steps:
