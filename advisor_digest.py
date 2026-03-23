@@ -8,7 +8,6 @@ import os
 import re
 import time
 import smtplib
-import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone, timedelta
@@ -47,63 +46,76 @@ EMAIL_TO                = os.environ["EMAIL_TO"]   # comma-separated
 SMTP_HOST               = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT               = int(os.environ.get("SMTP_PORT", "587"))
 
-REDDIT_HEADERS = {"User-Agent": "AdvisorTopicsDigest/1.0 (weekly digest bot)"}
-
-
 # ---------------------------------------------------------------------------
-# Reddit
+# Reddit — via Apify trudax/reddit-scraper-lite
+# Avoids direct reddit.com requests which are blocked in GitHub Actions.
+# Requires: APIFY_API_TOKEN
 # ---------------------------------------------------------------------------
-def fetch_reddit_top_posts(subreddit: str = "CFP", limit: int = 25) -> list[dict]:
-    url = f"https://www.reddit.com/r/{subreddit}/top.json"
-    params = {"t": "week", "limit": limit}
-    resp = requests.get(url, headers=REDDIT_HEADERS, params=params, timeout=15)
-    resp.raise_for_status()
+def collect_reddit(subreddit: str = "CFP", post_limit: int = 50, comments_per_post: int = 50) -> list[dict]:
+    if not APIFY_API_TOKEN:
+        print("  APIFY_API_TOKEN not set — skipping Reddit.")
+        return []
 
-    posts = []
-    for child in resp.json()["data"]["children"]:
-        d = child["data"]
-        posts.append({
-            "title":        d["title"],
-            "text":         d.get("selftext", "")[:2000].strip(),
-            "score":        d["score"],
-            "num_comments": d["num_comments"],
-            "url":          f"https://reddit.com{d['permalink']}",
-            "source":       f"Reddit r/{subreddit}",
-        })
-    return posts
+    client = ApifyClient(APIFY_API_TOKEN)
+    one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
+    run_input = {
+        "startUrls":    [{"url": f"https://www.reddit.com/r/{subreddit}/top/?t=week"}],
+        "maxPostCount": post_limit,
+        "maxComments":  comments_per_post,
+        "time":         "week",
+        "proxy":        {"useApifyProxy": True},
+    }
 
-def fetch_reddit_top_comments(permalink: str, limit: int = 5) -> str:
-    url = f"https://www.reddit.com{permalink}.json"
+    print(f"  Running Apify actor for r/{subreddit}...")
     try:
-        resp = requests.get(
-            url, headers=REDDIT_HEADERS,
-            params={"limit": limit, "sort": "top"}, timeout=10
+        run = client.actor("trudax/reddit-scraper-lite").call(
+            run_input=run_input,
+            timeout_secs=180,
         )
-        resp.raise_for_status()
-        comments = resp.json()[1]["data"]["children"]
-        texts = []
-        for c in comments:
-            if c["kind"] == "t1":
-                body = c["data"].get("body", "").strip()[:2000]
-                if body and body != "[deleted]":
-                    texts.append(body)
-        return " | ".join(texts[:limit])
-    except Exception:
-        return ""
+    except Exception as e:
+        print(f"  Apify Reddit actor failed: {e}")
+        return []
 
+    posts: dict[str, dict] = {}
+    comments_by_post: dict[str, list[str]] = {}
 
-def collect_reddit(subreddit: str = "CFP", post_limit: int = 20, comments_per_post: int = 3) -> list[dict]:
-    posts = fetch_reddit_top_posts(subreddit, post_limit)
-    print(f"  Fetched {len(posts)} posts from r/{subreddit}")
-    for i, post in enumerate(posts):
-        permalink = post["url"].replace("https://reddit.com", "")
-        top_comments = fetch_reddit_top_comments(permalink, comments_per_post)
+    for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+        data_type = item.get("dataType")
+
+        if data_type == "post":
+            post_id = item.get("id", "")
+            created = item.get("createdAt", "")
+            try:
+                post_dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                if post_dt < one_week_ago:
+                    continue
+            except (ValueError, AttributeError):
+                pass
+            posts[post_id] = {
+                "title":        (item.get("title") or "").strip(),
+                "text":         (item.get("body") or "")[:2000].strip(),
+                "score":        item.get("upVotes", 0),
+                "num_comments": item.get("numberOfComments", 0),
+                "url":          item.get("url", ""),
+                "source":       f"Reddit r/{subreddit}",
+            }
+
+        elif data_type == "comment":
+            parent_id = item.get("parentId", "")
+            body = (item.get("body") or "").strip()
+            if body and body != "[deleted]":
+                comments_by_post.setdefault(parent_id, []).append(body[:500])
+
+    results = []
+    for post_id, post in posts.items():
+        top_comments = comments_by_post.get(post_id, [])[:comments_per_post]
         if top_comments:
-            post["text"] = (post["text"] + "\nTop comments: " + top_comments).strip()
-        if i < len(posts) - 1:
-            time.sleep(0.5)
-    return posts
+            post["text"] = (post["text"] + "\nTop comments: " + " | ".join(top_comments)).strip()
+        results.append(post)
+
+    print(f"  Collected {len(results)} posts from r/{subreddit}")
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -189,10 +201,14 @@ Below are bullet-point summaries extracted from posts and discussions on Reddit 
 {content}
 ---
 
-Identify the TOP 10 most discussed or important topics. Format each topic EXACTLY like this — use a number, never a bullet:
+Identify the TOP 10 most discussed or important topics. At least 2-3 of the 10 topics MUST come primarily from LinkedIn posts — do not let Reddit dominate just because it has more posts. Weight LinkedIn topics by importance, not volume.
+
+Format each topic EXACTLY like this — use a number, never a bullet:
 
 1. **[Category, Category] Topic Title**
    - 2-3 sentence summary. You MUST preserve [n] citation numbers inline in square brackets where relevant, e.g. "Advisors are debating X [1][4]." Always use square brackets — never bare numbers alone.
+
+Be specific in both the title and summary. If advisors are discussing a specific law, tax rule, software tool, custodian, regulation, or named product — use its exact name (e.g. "SECURE 2.0", "Orion", "RMD age 73", "Form ADV"). Do not summarize into vague generalities.
 
 Valid category tags: {categories}
 Use one or more tags per topic, comma-separated inside the brackets.
@@ -392,7 +408,7 @@ def build_html_email(summary: str, date_str: str, posts: list[dict]) -> str:
         f'<h2 style="color:#1a3a5c;border-bottom:2px solid #1a3a5c;padding-bottom:8px;">'
         f'Financial Advisor Weekly Digest</h2>'
         f'<p style="color:#888;font-size:13px;font-family:sans-serif;">'
-        f'Top issues discussed by CFPs on Reddit &amp; LinkedIn &mdash; week of {date_str}</p>'
+        f'Top issues discussed by advisors on Reddit &amp; LinkedIn &mdash; week of {date_str}</p>'
         f'<hr>'
         f'{"".join(html_lines)}'
         f'{sources_html}'
@@ -409,7 +425,7 @@ def send_email(summary: str, posts: list[dict]) -> None:
     date_str = datetime.now().strftime("%B %d, %Y")
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"CFP Weekly Digest — {date_str}"
+    msg["Subject"] = f"Advisor Weekly Digest — {date_str}"
     msg["From"]    = EMAIL_FROM
     msg["To"]      = ", ".join(recipients)
 
@@ -432,11 +448,21 @@ def main() -> None:
     print("=== Financial Advisor Weekly Digest ===")
     print(f"Run date: {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}\n")
 
-    print("Fetching Reddit r/CFP...")
-    reddit_posts = collect_reddit(subreddit="CFP", post_limit=50, comments_per_post=50)
+    TEST_MODE = True  # Set True for a quick low-cost test run (5 posts, no LinkedIn)
 
-    print("\nFetching LinkedIn posts via Apify...")
-    linkedin_posts = collect_linkedin()
+    print("Fetching Reddit r/CFP...")
+    reddit_posts = collect_reddit(
+        subreddit="CFP",
+        post_limit=10 if TEST_MODE else 50,
+        comments_per_post=3 if TEST_MODE else 50,
+    )
+
+    linkedin_posts = []
+    if not TEST_MODE:
+        print("\nFetching LinkedIn posts via Apify...")
+        linkedin_posts = collect_linkedin()
+    else:
+        print("\nTEST_MODE: skipping LinkedIn.")
 
     all_posts = reddit_posts + linkedin_posts
     print(f"\nTotal items collected: {len(all_posts)}")
