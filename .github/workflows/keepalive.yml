@@ -1,0 +1,29 @@
+name: Keepalive Commit
+
+on:
+  schedule:
+    - cron: '0 15 * * 3'  # Every Wednesday at 3pm UTC (11am ET)
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Update timestamp
+        run: |
+          echo "Last keepalive: $(date -u)" > .github/keepalive.txt
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .github/keepalive.txt
+          git commit -m "chore: keepalive commit" || exit 0
+          git push
