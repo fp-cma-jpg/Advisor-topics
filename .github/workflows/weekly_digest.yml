@@ -2,7 +2,7 @@ name: Weekly Advisor Digest
 
 on:
   schedule:
-    - cron: '0 13 * * 1'   # Every Monday at 1pm UTC (9am ET / 8am CT)
+    - cron: '0 15 * * 3'   # Every Wednesday at 3pm UTC (11am ET / 10am CT)
   workflow_dispatch:         # Also allows manual "Run workflow" from GitHub Actions UI
 
 jobs:
