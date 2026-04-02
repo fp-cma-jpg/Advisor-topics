@@ -454,7 +454,7 @@ def main() -> None:
     print("=== Financial Advisor Weekly Digest ===")
     print(f"Run date: {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}\n")
 
-    TEST_MODE = True  # Set True for a quick low-cost test run (5 posts, no LinkedIn)
+    TEST_MODE = False  # Set True for a quick low-cost test run (5 posts, no LinkedIn)
 
     print("Fetching Reddit r/CFP...")
     reddit_posts = collect_reddit(
