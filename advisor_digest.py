@@ -30,7 +30,8 @@ LINKEDIN_PROFILES = [
     "https://www.linkedin.com/in/charlesfailla/",
     "https://www.linkedin.com/in/philip-waxelbaum-4849b5a/",
     "https://www.linkedin.com/in/bhenrymoreland/",
-    "https://www.linkedin.com/in/cfpjudd/"
+    "https://www.linkedin.com/in/cfpjudd/",
+    "https://www.linkedin.com/in/lindsey-c-young/"
 ]
 
 
