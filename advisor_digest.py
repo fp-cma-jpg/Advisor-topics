@@ -27,11 +27,15 @@ except ImportError:
 # ---------------------------------------------------------------------------
 LINKEDIN_PROFILES = [
     "https://www.linkedin.com/in/kevin-thompson-cfp%C2%AE%EF%B8%8F-ricp%C2%AE%EF%B8%8F-ea-74964428/",
-    "https://www.linkedin.com/in/charlesfailla/",
+    "https://www.linkedin.com/in/michaelkitces/"
     "https://www.linkedin.com/in/philip-waxelbaum-4849b5a/",
     "https://www.linkedin.com/in/bhenrymoreland/",
     "https://www.linkedin.com/in/cfpjudd/",
-    "https://www.linkedin.com/in/lindsey-c-young/"
+    "https://www.linkedin.com/in/lindsey-c-young/",
+    "https://www.linkedin.com/in/brntsllvn/",
+    "https://www.linkedin.com/in/hannahmoorecfp/",
+    "https://www.linkedin.com/in/danielcrosby/",
+    "https://www.linkedin.com/in/dani-fava/"
 ]
 
 
