@@ -76,7 +76,7 @@ def collect_reddit(subreddit: str = "CFP", post_limit: int = 50, comments_per_po
     try:
         run = client.actor("trudax/reddit-scraper-lite").call(
             run_input=run_input,
-            timeout_secs=180,
+            wait_secs=180,
         )
     except Exception as e:
         print(f"  Apify Reddit actor failed: {e}")
@@ -149,7 +149,7 @@ def collect_linkedin() -> list[dict]:
     try:
         run = client.actor("harvestapi/linkedin-profile-posts").call(
             run_input=run_input,
-            timeout_secs=120,
+            wait_secs=120,
         )
     except Exception as e:
         print(f"  Apify actor failed: {e}")
