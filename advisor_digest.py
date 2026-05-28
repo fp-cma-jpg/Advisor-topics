@@ -84,7 +84,8 @@ def collect_reddit(subreddit: str = "CFP", post_limit: int = 50, comments_per_po
     posts: dict[str, dict] = {}
     comments_by_post: dict[str, list[str]] = {}
 
-    for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+    dataset_id = run.get("defaultDatasetId") if isinstance(run, dict) else run.default_dataset_id
+for item in client.dataset(dataset_id).iterate_items():
         data_type = item.get("dataType")
 
         if data_type == "post":
@@ -154,7 +155,8 @@ def collect_linkedin() -> list[dict]:
         return []
 
     results = []
-    for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+    dataset_id = run.get("defaultDatasetId") if isinstance(run, dict) else run.default_dataset_id
+for item in client.dataset(dataset_id).iterate_items():
         text   = (item.get("content") or "").strip()
         url    = item.get("linkedinUrl") or item.get("socialContent", {}).get("shareUrl") or ""
         author = item.get("author", {}).get("name", "Unknown") if isinstance(item.get("author"), dict) else "Unknown"
