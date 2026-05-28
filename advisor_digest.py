@@ -81,8 +81,8 @@ def collect_reddit(subreddit: str = "CFP", post_limit: int = 50, comments_per_po
         print(f"  Apify Reddit actor failed: {e}")
         return []
 
-posts: dict[str, dict] = {}
-comments_by_post: dict[str, list[str]] = {}
+    posts: dict[str, dict] = {}
+    comments_by_post: dict[str, list[str]] = {}
 
     dataset_id = run.get("defaultDatasetId") if isinstance(run, dict) else run.default_dataset_id
     for item in client.dataset(dataset_id).iterate_items():
