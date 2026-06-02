@@ -74,7 +74,7 @@ def collect_reddit(subreddit: str = "CFP", post_limit: int = 50, comments_per_po
 
     print(f"  Running Apify actor for r/{subreddit}...")
     try:
-        run = client.actor("apify/reddit-scraper").call(
+        run = client.actor("trudax/reddit-scraper-lite").call(
             run_input=run_input,
         )
     except Exception as e:
