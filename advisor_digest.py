@@ -154,7 +154,7 @@ def collect_linkedin() -> list[dict]:
         print(f"  Apify actor failed: {e}")
         return []
 
-results = []
+    results = []
     dataset_id = run.get("defaultDatasetId") if isinstance(run, dict) else run.default_dataset_id
     for item in client.dataset(dataset_id).iterate_items():
         text   = (item.get("content") or "").strip()
