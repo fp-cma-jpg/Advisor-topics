@@ -65,10 +65,12 @@ def collect_reddit(subreddit: str = "CFP", post_limit: int = 50, comments_per_po
     one_week_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
     run_input = {
-        "startUrls":    [{"url": f"https://www.reddit.com/r/{subreddit}/top/?t=week"}],
+        "startUrls":    [{"url": f"https://www.reddit.com/r/{subreddit}/"}],
+        "sort":         "top",
+        "time":         "week",
         "maxPostCount": post_limit,
         "maxComments":  comments_per_post,
-        "time":         "week",
+        "maxItems":     1000,
         "proxy":        {"useApifyProxy": True},
     }
 
